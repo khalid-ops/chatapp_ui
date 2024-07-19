@@ -2,8 +2,8 @@
 import { Label } from "../lib/ui/label.tsx";
 import { Input } from "../lib/ui/input.tsx";
 import { Button } from "../lib/ui/button.tsx";
-import { Link, redirect } from "react-router-dom"
-import { FormEvent, SVGProps, useEffect, useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { FormEvent, SVGProps } from "react"
 import { TokenResponse, useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
 
@@ -29,23 +29,21 @@ interface infoResponse{
 
 export default function Login() {
 
-  const [googleUser, setGoogleUser] = useState<TokenResponse>();
-  const [googleUserInfo, setGoogleUserInfo] = useState<infoResponse>();
-
+  const navigate = useNavigate();
   const loginData = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log(event)
   }
 
   const userGoogleLogin = useGoogleLogin({
-    onSuccess: (codeResponse) => setGoogleUser(codeResponse),
+    onSuccess: (codeResponse) => getUserInfo(codeResponse),
     onError: (error) => console.log("login failed", error),
   })
   
-  const getUserInfo = async () => {
+  const getUserInfo = async (data: Omit<TokenResponse, "error" | "error_description" | "error_uri">) => {
+    const googleUser = data
     if(googleUser){
         try{
-
         const response = await axios
         .get(`https://www.googleapis.com/oauth2/v1/userinfo?access_token=${googleUser.access_token}`, {
             headers: {
@@ -53,20 +51,12 @@ export default function Login() {
                 Accept: 'application/json'
             }
         })
-        setGoogleUserInfo(response.data)
+        saveUserAndLogin(response.data)
         console.log(response.data);
         }
         catch(err){console.log(err)}
     }
   }
-
-  useEffect(() => {
-    getUserInfo();
-    if(googleUserInfo){
-        saveUserAndLogin(googleUserInfo);
-    }
-  },[googleUser])
-
 
 
   const saveUserAndLogin = async (googleUserInfo: infoResponse) => {
@@ -79,18 +69,18 @@ export default function Login() {
         loggedIn: true
     }
     
-    const response = await axios.post('http://localhost:3001/users', data);
-    if(response.status == 201){
-        console.log(response.data);
-        return redirect('/home');
+    const response = await axios.post('http://localhost:3001/users/google-login', data);
+    if(response.status == 200 || response.status == 201){
+        console.log(response.data, "inside bkend");
+        navigate("/home");
     }
     else{
         console.log(response)
     }
-    return response
-    
+    return response  
   }
-  
+
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background">
@@ -126,7 +116,7 @@ export default function Login() {
         </Button>
         <div className="text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link to="#" className="underline">
+          <Link to="/signup" className="underline">
             Sign up
           </Link>
         </div>
