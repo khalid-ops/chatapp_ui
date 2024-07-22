@@ -7,30 +7,32 @@ import { Card } from "../lib/ui/card"
 import { Label } from "../lib/ui/label"
 import { Input } from "../lib/ui/input"
 import { Button } from "../lib/ui/button"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useForm } from "react-hook-form"
+import axios from "axios"
 // import { FormEvent } from "react"
 
 export default function Signup() {
 
     const { register, handleSubmit, watch, formState: {errors},  } = useForm({
         defaultValues: {
-            firstname: "",
-            lastname: "",
+            firstName: "",
+            lastName: "",
             email: "",
             password: "",
             confirmedPassword: ""
         }
     })
-    
+    const navigate = useNavigate();
     const confirmedPass = watch("password");
 
-//    const signupUser = async (event: FormEvent) => {
-//     event.preventDefault();    
-//     console.log(formData)
+    const addUser = async (user: { firstName: string; lastName: string; email: string; password: string; confirmedPassword: string }) => {
+      const response = await axios.post('http://localhost:3001/users', user)
+      if(response.status == 201){
+        navigate('/home');
+      }
+    }
 
-
-//    } 
   return (
     <div className="flex justify-center items-center h-screen bg-background">
       <Card className="w-full max-w-md p-6 space-y-6">
@@ -39,18 +41,19 @@ export default function Signup() {
           <p className="text-muted-foreground">Enter your information to get started.</p>
         </div>
         <form className="space-y-4" onSubmit={handleSubmit((data) => {
+            addUser(data);
             console.log(data);
         })}>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="firstName">First Name</Label>
-              <Input id="firstName" type="text" placeholder="John" {...register("firstname", { required: 'first name is required'})} />
-              <p className="text-red-600">{errors.firstname?.message}</p>
+              <Input id="firstName" type="text" placeholder="John" {...register("firstName", { required: 'first name is required'})} />
+              <p className="text-red-600">{errors.firstName?.message}</p>
             </div>
             <div>
               <Label htmlFor="lastName">Last Name</Label>
-              <Input id="lastName" type="text" placeholder="Doe" {...register("lastname", { required: 'last name is required'})}  />
-              <p className="text-red-600">{errors.lastname?.message}</p>
+              <Input id="lastName" type="text" placeholder="Doe" {...register("lastName", { required: 'last name is required'})}  />
+              <p className="text-red-600">{errors.lastName?.message}</p>
             </div>
           </div>
           <div>
