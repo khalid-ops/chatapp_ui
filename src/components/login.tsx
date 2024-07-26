@@ -3,9 +3,10 @@ import { Label } from "../lib/ui/label.tsx";
 import { Input } from "../lib/ui/input.tsx";
 import { Button } from "../lib/ui/button.tsx";
 import { Link, useNavigate } from "react-router-dom"
-import { FormEvent, SVGProps } from "react"
+import { SVGProps } from "react"
 import { TokenResponse, useGoogleLogin } from "@react-oauth/google";
 import axios from 'axios';
+import { useForm } from "react-hook-form";
 
 interface User {
     googleId: string | null;
@@ -30,9 +31,30 @@ interface infoResponse{
 export default function Login() {
 
   const navigate = useNavigate();
-  const loginData = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    console.log(event)
+  const { register, handleSubmit, formState: {errors}, } = useForm({
+    defaultValues:{
+      email: '',
+      password: ''
+    }
+  })
+
+
+  const login = async (info: {
+    email: string,
+    password: string,
+  }) => {
+    try{
+      console.log(info);
+      const response = await axios.post('http://localhost:3001/auth/login', info);
+      console.log(response)
+      if (response.status == 200){
+        console.log(response);
+        navigate('/home');
+      }
+    }catch (error){
+      console.log(error);
+    }
+
   }
 
   const userGoogleLogin = useGoogleLogin({
@@ -89,14 +111,18 @@ export default function Login() {
           <h1 className="text-3xl font-bold text-primary">Welcome Back</h1>
           <p className="text-muted-foreground">Sign in to your account</p>
         </div>
-        <form className="space-y-4" onSubmit={(e) => loginData(e)}>
+        <form className="space-y-4" onSubmit={handleSubmit((data) => {
+          login(data);
+        })}>
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="name@example.com" className="mt-1" />
+            <Input id="email" type="email" placeholder="name@example.com" className="mt-1" {...register("email", { required: 'email is required'})}/>
+            <p className="text-red-600">{errors.email?.message}</p>
           </div>
           <div>
             <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" placeholder="••••••••" className="mt-1" />
+            <Input id="password" type="password" placeholder="••••••••" className="mt-1" {...register("password", { required: 'password is required'})}/>
+            <p className="text-red-600">{errors.password?.message}</p>
           </div>
           <Button type="submit" className="w-full">
             Sign In
