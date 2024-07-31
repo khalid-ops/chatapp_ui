@@ -4,8 +4,10 @@ import axios from "axios";
 export default function HomePage(){
 
     const callApi = async () => {
-        const response = await axios.get('http://localhost:3001/users',{
-            withCredentials: true,
+        const response = await axios.get('http://127.0.0.1:3001/users',{
+            headers: {
+                Authorization: `Bearer ${localStorage.getItem('accessToken')}`
+            }
         }
         )
 
