@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "../lib/ui/avatar"
 import { Button } from "../lib/ui/button.tsx";
 import { Link } from 'react-router-dom'
 import { useQuery } from "@tanstack/react-query";
-import { fetchUsers } from "@/api/users/users.ts";
+import { AddContact, fetchUserFriends, fetchUsers } from "@/api/users/users.ts";
 import { SVGProps } from "react";
 import { JSX } from "react/jsx-runtime";
 import { useState } from 'react'
@@ -16,12 +16,7 @@ import {
     DialogTrigger,
   } from "../lib/ui/dialog"
 import { Check, Search } from 'lucide-react'
-
-  // Mock data for search results
-const mockItems = [
-    "Apple", "Banana", "Cherry", "Date", "Elderberry",
-    "Fig", "Grape", "Honeydew", "Kiwi", "Lemon"
-]
+import { User } from "@/lib/types/user.ts";
 
 export default function HomePage(){
     const contactUsers = useQuery({
@@ -29,26 +24,40 @@ export default function HomePage(){
         queryFn: fetchUsers,
     })
 
+    contactUsers.refetch();
+    const currentUserFriends = useQuery({
+        queryKey: ['friends'],
+        queryFn: () => {
+            return fetchUserFriends(localStorage.getItem('userId') as string)
+        }
+    })
+
     const [isOpen, setIsOpen] = useState(false)
-    const [searchQuery, setSearchQuery] = useState('')
-    const [selectedItems, setSelectedItems] = useState<string[]>([])
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedItems, setSelectedItems] = useState<User[]>([]);
+    const [chatContactUser, setChatContactUser] = useState('');
+
   
-    const filteredItems = mockItems.filter(item => 
-      item.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    const filteredItems = contactUsers?.data?.filter((item) => {
+      if (item.username?.toLowerCase().includes(searchQuery.toLowerCase())){
+        return item
+      }
+    })
   
-    const toggleItem = (item: string) => {
+    const toggleItem = (item: User) => {
       setSelectedItems(prev => 
         prev.includes(item) 
-          ? prev.filter(i => i !== item)
-          : [...prev, item]
+          ? prev.filter(i => i.username !== item.username)
+          : [item]
       )
     }
   
-    // const handleSubmit = () => {
-    //   console.log('Selected items:', selectedItems)
-    //   setIsOpen(false)
-    // }
+    const handleSubmit = async () => {
+      console.log('Selected items:', selectedItems)
+      await AddContact(localStorage.getItem('userId') as string, selectedItems[0].id)
+      setChatContactUser(selectedItems[0].id)
+      setIsOpen(false)
+    }
 
     return (
         <div className="flex min-h-screen w-full">
@@ -62,7 +71,10 @@ export default function HomePage(){
                 <div className="font-medium">Acme Chat</div>
                 </div>
                 <div className="ml-auto flex items-center gap-2">
-                <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <Dialog open={isOpen} onOpenChange={() => {
+                    setIsOpen(!isOpen)
+                    setSelectedItems([])
+                }}>
                     <DialogTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <PlusIcon className="h-5 w-5" />
@@ -70,7 +82,7 @@ export default function HomePage(){
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                        <DialogTitle>Search Contacts</DialogTitle>
+                        <DialogTitle>Search Friends On this Platform</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                         <div className="flex items-center gap-2">
@@ -83,9 +95,9 @@ export default function HomePage(){
                             />
                         </div>
                         <div className="max-h-[200px] overflow-y-auto">
-                            {filteredItems.map((item) => (
+                            {filteredItems?.map((item) => (
                             <div
-                                key={item}
+                                key={item.id}
                                 className={`flex items-center gap-2 p-2 cursor-pointer hover:bg-gray-100 rounded ${
                                 selectedItems.includes(item) ? 'bg-blue-100' : ''
                                 }`}
@@ -94,24 +106,25 @@ export default function HomePage(){
                                 {selectedItems.includes(item) && (
                                 <Check className="w-4 h-4 text-blue-500" />
                                 )}
-                                <span>{item}</span>
+                                <span>{item.username}</span>
                             </div>
                             ))}
                         </div>
-                        {/* <Button onClick={handleSubmit}>
-                            Add
-                        </Button> */}
+                        <Button onClick={handleSubmit}>
+                            Message
+                        </Button>
                         </div>
                     </DialogContent>
                     </Dialog>
                 </div>
             </div>
             <div className="flex-1 overflow-auto">
-                {contactUsers.data?.map((contact) => (
+                {currentUserFriends.data?.map((contact) => (
                     <div className="grid gap-2 p-4" key={contact.id}>
                     <Link
                         to="#"
                         className="flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-muted"
+                        onClick={() => setChatContactUser(contact.id)}
                     >
                         <Avatar className="h-10 w-10 border">
                         <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
@@ -128,7 +141,7 @@ export default function HomePage(){
 
             </div>
             </div>            
-            <Chat />
+            <Chat chatContactUser={chatContactUser}/>
         </div>
 
     )

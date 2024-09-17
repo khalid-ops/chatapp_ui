@@ -10,7 +10,7 @@ import { Textarea } from "../lib/ui/textarea"
 import { useEffect, useState } from 'react';
 import { socket } from '../socket';
 
-export default function Chat() {
+export default function Chat({ chatContactUser: chatContactUser }: { chatContactUser: string }) {
 
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState<string>("");
@@ -30,11 +30,16 @@ export default function Chat() {
   const sendMessage = () => {
     if (input.trim() !== "") {
       console.log(input, 'react input');
-      socket.emit("message", input);  // Send message to server
+      socket.emit("chat-message", {
+        message: input,
+        senderId: localStorage.getItem('userId'),
+        recieverId: chatContactUser,
+      });  // Send message to server
       setInput("");  // Clear input after sending
     }
   };
   return (
+
       <div className="flex flex-1 flex-col">
         <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background px-4">
           <div className="flex items-center gap-3">

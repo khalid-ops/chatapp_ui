@@ -48,6 +48,7 @@ export default function Login() {
       const response = await axios.post('http://localhost:3001/auth/login', info);
       if (response.status == 201){
         localStorage.setItem('accessToken', response.data.access_token);
+        localStorage.setItem('userId', response.data.user.sub);
         navigate('/home');
       }
     }catch (error){
