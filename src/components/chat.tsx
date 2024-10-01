@@ -12,24 +12,24 @@ import { socket } from '../socket';
 
 export default function Chat({ chatContactUser: chatContactUser }: { chatContactUser: string }) {
 
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<unknown[]>([]);
   const [input, setInput] = useState<string>("");
 
   useEffect(() => {
     // Listen for incoming messages
-    socket.on("message", (message: string) => {
+    socket.on("chat-message", (message: unknown) => {
+      console.log(message, 'react message');
       setMessages((prevMessages) => [...prevMessages, message]);
     });
 
     // Clean up on component unmount
     return () => {
-      socket.off("message");
+      socket.off("chat-message");
     };
-  }, []);
+  }, [messages]);
 
   const sendMessage = () => {
     if (input.trim() !== "") {
-      console.log(input, 'react input');
       socket.emit("chat-message", {
         message: input,
         senderId: localStorage.getItem('userId'),
@@ -63,46 +63,32 @@ export default function Chat({ chatContactUser: chatContactUser }: { chatContact
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="grid gap-4">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-              <div className="rounded-md bg-muted p-3 text-sm">
-                <p>Hey, how's it going?</p>
-                <div className="mt-2 text-xs text-muted-foreground">2h</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 justify-end">
-              <div className="rounded-md bg-primary p-3 text-sm text-primary-foreground">
-                <p>I'm doing great, thanks for asking!</p>
-                <div className="mt-2 text-xs text-muted-foreground">2h</div>
-              </div>
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-            </div>
-            <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-              <div className="rounded-md bg-muted p-3 text-sm">
-                <p>Did you see the new update?</p>
-                <div className="mt-2 text-xs text-muted-foreground">4h</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 justify-end">
-              <div className="rounded-md bg-primary p-3 text-sm text-primary-foreground">
-                <p>Yes, I just checked it out. Looks great!</p>
-                <div className="mt-2 text-xs text-muted-foreground">4h</div>
-              </div>
-              <Avatar className="h-8 w-8 border">
-                <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
-                <AvatarFallback>AC</AvatarFallback>
-              </Avatar>
-            </div>
+            {messages.map((message) => {
+              return (
+                <>
+                <div className="flex items-start gap-3">
+                  <Avatar className="h-8 w-8 border">
+                    <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
+                    <AvatarFallback>AC</AvatarFallback>
+                  </Avatar>
+                  <div className="rounded-md bg-muted p-3 text-sm">
+                    <p>{message}</p>
+                    <div className="mt-2 text-xs text-muted-foreground">2h</div>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3 justify-end">
+                    <div className="rounded-md bg-primary p-3 text-sm text-primary-foreground">
+                      <p>{message}</p>
+                      <div className="mt-2 text-xs text-muted-foreground">2h</div>
+                    </div>
+                    <Avatar className="h-8 w-8 border">
+                      <AvatarImage src="/placeholder-user.jpg" alt="Avatar" />
+                      <AvatarFallback>AC</AvatarFallback>
+                    </Avatar>
+                </div>
+                </>
+              )
+            })}
           </div>
         </div>
         <div className="sticky bottom-0 z-10 flex h-14 items-center border-t bg-background px-4">
