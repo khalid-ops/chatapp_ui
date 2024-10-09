@@ -15,7 +15,7 @@ import {
     DialogTitle,
     DialogTrigger,
   } from "../lib/ui/dialog"
-import { Check, Search } from 'lucide-react'
+import { BellIcon, Check, Search } from 'lucide-react'
 import { User } from "@/lib/types/user.ts";
 
 export default function HomePage(){
@@ -116,7 +116,7 @@ export default function HomePage(){
                         </div>
                     </DialogContent>
                     </Dialog>
-                </div>
+                </div>           
             </div>
             <div className="flex-1 overflow-auto">
                 {currentUserFriends.data?.map((contact) => (
@@ -140,8 +140,17 @@ export default function HomePage(){
                 ))}
 
             </div>
-            </div>            
-            <Chat chatContactUser={chatContactUser}/>
+            </div>
+            <div className="flex flex-1 flex-col">
+              <div className="sticky top-0 z-10 flex h-14 items-center border-b bg-background px-4">
+                <div className="ml-auto flex items-center gap-2">
+                  <Button variant="ghost" size="icon">
+                    <BellIcon className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+              <Chat chatContactUser={chatContactUser}/>
+            </div>
         </div>
 
     )

@@ -14,7 +14,7 @@ export default function Chat({ chatContactUser: chatContactUser }: { chatContact
 
   const [messages, setMessages] = useState<unknown[]>([]);
   const [input, setInput] = useState<string>("");
-
+  socket.auth = { userId: localStorage.getItem('userId') };
   useEffect(() => {
     // Listen for incoming messages
     socket.on("chat-message", (message: unknown) => {
